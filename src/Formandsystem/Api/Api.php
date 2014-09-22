@@ -61,6 +61,7 @@ class Api {
 	 */
 	public function path( $new_path )
 	{
+		$new_path = trim($new_path);
 		// prepare url
 		if( substr($new_path, 0, 4) !== 'http' && (!isset($this->path) || $this->path == "") )
 		{
@@ -93,12 +94,24 @@ class Api {
 		{
 			if($e->getCode() == 401)
 			{
-				Log::error('Wrong credentials for Api call to '.$this->path($path));
-				return false;
+				return array('success' => "false", $e->getCode() => 'Wrong credentials for Api call to '.$this->path($path));
+			}
+			elseif( $e->getCode() == 400 )
+			{
+				// cast errors to string
+				$errors = json_decode($e->getResponse()->getBody(), true);
+				$error = "";
+				foreach( $errors['errors'] as $key => $arr )
+				{
+					$error .= "[".$key."]: ".implode(" ",$arr).' ';
+				}
+				return array('success' => "false", $e->getCode() => $error );
+			}
+			elseif( $e->getCode() == 404 )
+			{
+				return array('success' => "false", $e->getCode() => 'Page not found: '.$this->path($path));
 			}
 
-			Log::error($e->getCode().': '.$e->getMessage().' on '.$this->path($path));
-			return false;
 		}
 	}
 	/**
