@@ -129,60 +129,15 @@ class Api {
 
 
 	/**
-	 * call_method
-	 *
-	 * call_method request
-	 *
-	 * @access	public
-	 */
-	public function call_method($fn, $path = null, $config = array(), $returnObj = false)
-	{
-		try{
-			$req = $this->client->$fn(url($this->path($path)), array_merge((array)$this->config, (array)$config) );
+	* page
+	*
+	* @access	public
+	*/
+	// public function page($id, $parameters)
+	// {
+	// 	return $this
+	// }
 
-			if($returnObj !== true)
-			{
-				$response = $req->json();
-
-				if( isset($response['content'] ) )
-				{
-					foreach($response['content'] as $item)
-					{
-						$item['data'] = json_decode($item['data'], true);
-						$result[] = $item;
-					}
-
-					$response['content'] = $result;
-				}
-
-				return $response;
-			}
-			return $req;
-		}
-		catch(GuzzleHttp\Exception\ClientException $e)
-		{
-			if($e->getCode() == 401)
-			{
-				return array('success' => "false", $e->getCode() => 'Wrong credentials for Api call to '.$this->path($path));
-			}
-			elseif( $e->getCode() == 400 )
-			{
-				// cast errors to string
-				$errors = json_decode($e->getResponse()->getBody(), true);
-				$error = "";
-				foreach( $errors['errors'] as $key => $arr )
-				{
-					$error .= "[".$key."]: ".implode(" ",$arr).' ';
-				}
-				return array('success' => "false", $e->getCode() => $error );
-			}
-			elseif( $e->getCode() == 404 )
-			{
-				return array('success' => "false", $e->getCode() => 'Page not found: '.$this->path($path));
-			}
-
-		}
-	}
 	/**
 	 * get
 	 *
@@ -238,5 +193,6 @@ class Api {
 	{
 		return $this->client;
 	}
+
 
 }
