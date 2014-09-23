@@ -10,9 +10,6 @@
  * @version
  */
 
-use Log;
-use App;
-use URL;
 use GuzzleHttp;
 use Exception;
 
@@ -86,7 +83,20 @@ class Api {
 
 			if($returnObj !== true)
 			{
-				return $req->json();
+				$response = $req->json();
+
+				if( isset($response['content'] ) )
+				{
+					foreach($response['content'] as $item)
+					{
+						$item['data'] = json_decode($item['data'], true);
+						$result[] = $item;
+					}
+
+					$response['content'] = $result;
+				}
+
+				return $response;
 			}
 			return $req;
 		}
