@@ -13,4 +13,4 @@ install:
   - COMPOSER_ROOT_VERSION=dev-master composer install --prefer-source
 
 script:
-  - bin/phpspec run
+  
