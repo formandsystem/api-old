@@ -62,4 +62,6 @@ class ApiSpec extends ObjectBehavior
       $this->makeRequest('get', $this->getRequestPath('pages', ['language' => 'de']))->shouldHaveType('\GuzzleHttp\Message\ResponseInterface');
     }
 
+    
+
 }

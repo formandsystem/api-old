@@ -77,9 +77,30 @@ class Api {
 		}
 		catch(GuzzleHttp\Exception\ClientException $e)
 		{
-			return 'error';
+			return $this->handleExceptions($e);
 		}
 	}
+
+	/**
+	* makeRequest
+	*
+	* @access	public
+	*/
+	public function handleExceptions( $e )
+	{
+		$errors = json_decode($e->getResponse()->getBody(), true);
+		$error = "";
+		if( is_array($errors) )
+		{
+			// cast errors to string
+			foreach( $errors['errors'] as $key => $arr )
+			{
+				$error .= "[".$key."]: ".implode(" ",$arr).' ';
+			}
+		}
+		return array('success' => "false", $e->getCode() => $error );
+	}
+
 
 	/**
 	 * call_method
