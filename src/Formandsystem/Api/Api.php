@@ -24,31 +24,25 @@ class Api {
 	// global client variable
 	public $client;
 
-	public function __construct()
+	public function __construct($config)
 	{
+		$this->config = $config;
 		$this->client = new GuzzleHttp\Client();
 	}
-	/**
-	 * config
-	 *
-	 * set config
-	 *
-	 * @access	public
-	 */
-	public function config( $config = null )
-	{
-		if( isset($config['url']) && substr($config['url'], 0, 4) !== 'http' )
-		{
-			throw new Exception('The base URL is not specified correctly in your call API::config()');
-		}
-		else
-		{
-			$this->path = $config['url'];
-			unset($config['url']);
-		}
 
-		$this->config = $config;
+
+	/**
+	* getBaseUrl
+	*
+	* return base url
+	*
+	* @access	public
+	*/
+	public function getBaseUrl()
+	{
+		return trim($this->config['url']).'/'.trim($this->config['version']).'/';
 	}
+
 	/**
 	 * path
 	 *
@@ -56,19 +50,37 @@ class Api {
 	 *
 	 * @access	public
 	 */
-	public function path( $new_path )
+	public function getRequestPath( $path, $parameters = [] )
 	{
-		$new_path = trim($new_path);
-		// prepare url
-		if( substr($new_path, 0, 4) !== 'http' && (!isset($this->path) || $this->path == "") )
+		// prepare parameters
+		foreach($parameters as $key => $value)
 		{
-			throw new Exception('Request URL is not specified correctly.');
+			$parameters[$key] = $key.'='.$value;
 		}
-		else
+
+		return trim($this->getBaseUrl().trim($path).'?'.implode("&",$parameters),'?');
+	}
+
+	/**
+	* makeRequest
+	*
+	* @access	public
+	*/
+	public function makeRequest($type, $path)
+	{
+		try{
+			// create request
+			$request = $this->client->createRequest($type, $path,
+							['auth' => [$this->config['username'], $this->config['password']]]);
+			// send request
+			return $this->client->send($request);
+		}
+		catch(GuzzleHttp\Exception\ClientException $e)
 		{
-			return (substr($new_path, 0, 4) == 'http' ? $new_path : trim($this->path,'/').'/'.trim($new_path, '/'));
+			return 'error';
 		}
 	}
+
 	/**
 	 * call_method
 	 *
@@ -179,4 +191,5 @@ class Api {
 	{
 		return $this->client;
 	}
+
 }

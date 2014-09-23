@@ -1,6 +1,7 @@
 <?php namespace Formandsystem\Api;
 
 use Illuminate\Support\ServiceProvider;
+use Config;
 
 class ApiServiceProvider extends ServiceProvider {
 
@@ -10,7 +11,7 @@ class ApiServiceProvider extends ServiceProvider {
 	 * @var bool
 	 */
 	protected $defer = false;
-  
+
 	/**
    * Booting
    */
@@ -18,7 +19,7 @@ class ApiServiceProvider extends ServiceProvider {
 	{
 		$this->package('formandsystem/api');
 	}
-	
+
 	/**
 	 * Register the service provider.
 	 *
@@ -26,11 +27,16 @@ class ApiServiceProvider extends ServiceProvider {
 	 */
 	public function register()
 	{
-		$this->app['api'] = $this->app->share(function($app)
-		{
-			return new Api;
+
+		$this->app->bind('api', function($app){
+
+			// get configuration (laravel)
+			$config = Config::get('api::api');
+			
+			return new Api($config);
+
 		});
-		
+
 		$this->app->booting(function()
 		{
 		  $loader = \Illuminate\Foundation\AliasLoader::getInstance();
