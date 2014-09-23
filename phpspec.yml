@@ -1,3 +1,5 @@
+formatter.name: pretty
+
 suites:
 
   formandsystemapi_suite:

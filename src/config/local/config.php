@@ -12,7 +12,7 @@ return array(
   */
 
   'api' => array(
-    'url' => 'http://api.formandsystem.com',
+    'url' => 'http://api.formandsystem.local',
     'version' => '1',
     'username' => $_ENV['FS_API_USER'],
     'password' => $_ENV['FS_API_PASSWORD'],

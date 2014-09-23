@@ -32,7 +32,7 @@ class ApiServiceProvider extends ServiceProvider {
 
 			// get configuration (laravel)
 			$config = Config::get('api::api');
-			
+
 			return new Api($config);
 
 		});
