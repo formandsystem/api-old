@@ -70,10 +70,8 @@ class Api {
 	{
 		try{
 			// create request
-			$request = $this->client->createRequest($type, $path,
-							['auth' => [$this->config['username'], $this->config['password']]]);
-			// send request
-			return $this->client->send($request);
+			$response = $this->client->$type($path, ['auth' => [$this->config['username'], $this->config['password']]]);
+			return $this->handleResponse($response->json());
 		}
 		catch(GuzzleHttp\Exception\ClientException $e)
 		{
@@ -81,8 +79,36 @@ class Api {
 		}
 	}
 
+
 	/**
-	* makeRequest
+	* handleResponse
+	*
+	* @access	public
+	*/
+	public function handleResponse( $response )
+	{
+		if( isset($response['content'] ) )
+		{
+			foreach($response['content'] as $item)
+			{
+				foreach( $item as $field => $value )
+				{
+					if( is_array(json_decode($value, true)) )
+					{
+						$item[$field] = json_decode($value, true);
+					}
+				}
+				$result[] = $item;
+			}
+
+			$response['content'] = $result;
+		}
+
+		return $response;
+	}
+
+	/**
+	* handleExceptions
 	*
 	* @access	public
 	*/
