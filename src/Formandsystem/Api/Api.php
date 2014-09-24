@@ -24,6 +24,12 @@ class Api {
 	// global requestPath
 	public $requestPath;
 
+	// global requestPath
+	public $requestOptions;
+
+	// global request
+	public $request;
+
 	// global client variable
 	public $client;
 
@@ -56,37 +62,41 @@ class Api {
 	 *
 	 * @access	public
 	 */
-	public function getRequestPath( $path, $parameters = [] )
+	public function setRequestPath( $path, $parameters = [] )
 	{
-		// prepare parameters
-		foreach($parameters as $key => $value)
-		{
-			$parameters[$key] = $key.'='.$value;
-		}
-
-		// set needed parameters if missing
-		foreach($this->defaults as $key => $value)
-		{
-			if( !isset($parameters[$key]) )
-			{
-				$parameters[$key] = $key.'='.$value;
-			}
-		}
-
-		return trim($this->getBaseUrl().trim($path).'?'.implode("&",$parameters),'?');
+		$this->requestPath = $this->getBaseUrl().trim($path);
 	}
 
+
 	/**
-	* makeRequest
+	* createRequest
 	*
 	* @access	public
 	*/
-	public function makeRequest($type, $path)
+	public function createRequest($type, $parameters = [])
+	{
+		// preapre response options array
+		$requestOptions['auth'] = [ $this->config['username'], $this->config['password'] ];
+		// if type == get, use parameters
+		$type === 'get' ? $requestOptions['query'] = array_merge($this->defaults, $parameters) : '';
+		// if type == get, use parameters
+		$type === 'put' || $type === 'post' ? $requestOptions['body'] = $parameters : '';
+		// make request
+		$this->request = $this->client->createRequest($type, $this->requestPath, $requestOptions);
+
+		return $this;
+	}
+
+
+	/**
+	* sendRequest
+	*
+	* @access	public
+	*/
+	public function sendRequest()
 	{
 		try{
-			// create request
-			$response = $this->client->$type($path, ['auth' => [$this->config['username'], $this->config['password']]]);
-			return $this->handleResponse($response->json());
+			return $this->handleResponse($this->client->send($this->request)->json());
 		}
 		catch(GuzzleHttp\Exception\ClientException $e)
 		{
@@ -94,6 +104,16 @@ class Api {
 		}
 	}
 
+
+	/**
+	* makeRequest
+	*
+	* @access	public
+	*/
+	public function makeRequest($type, $parameters = [])
+	{
+		return $this->createRequest($type, $parameters)->sendRequest();
+	}
 
 	/**
 	* handleResponse
@@ -131,7 +151,7 @@ class Api {
 	{
 		// get default error message;
 		$error = $e->getMessage();
-		$errors = array($errors[$e->getCode()] => $e->getMessage()) + json_decode($e->getResponse()->getBody(), true)['errors'];
+		$errors = array($e->getCode() => [$e->getMessage()]) + json_decode($e->getResponse()->getBody(), true)['errors'];
 
 		return array('success' => "false", 'errors' => $errors);
 	}
@@ -142,12 +162,34 @@ class Api {
 	*
 	* @access	public
 	*/
-	public function page($id, $parameters = [])
+	public function page($id = "")
 	{
-		$this->requestPath = $this->getRequestPath('pages/'.$id, $parameters);
+		$this->setRequestPath('pages/'.$id);
 
 		return $this;
 	}
+	public function pages($id = "")
+	{
+		return $this->page($id);
+	}
+
+
+	/**
+	* stream
+	*
+	* @access	public
+	*/
+	public function stream($id = "")
+	{
+		$this->setRequestPath('streams/'.$id);
+
+		return $this;
+	}
+	public function streams($id, $parameters = "")
+	{
+		return $this->stream($id, $parameters);
+	}
+
 
 	/**
 	 * get
@@ -156,9 +198,9 @@ class Api {
 	 *
 	 * @access	public
 	 */
-	public function get()
+	public function get($parameters = [])
 	{
-		return $this->makeRequest('get', $this->requestPath);
+		return $this->makeRequest('get', $parameters);
 	}
 	/**
 	 * delete
@@ -167,9 +209,9 @@ class Api {
 	 *
 	 * @access	public
 	 */
-	public function delete( $path, $config = array(), $returnObj = false )
+	public function delete()
 	{
-		return $this->call_method('delete', $path, $config, $returnObj);
+		return $this->makeRequest('delete');
 	}
 	/**
 	 * post
@@ -178,9 +220,13 @@ class Api {
 	 *
 	 * @access	public
 	 */
-	public function post( $path, $config = array(), $returnObj = false )
+	public function post($parameters = [])
 	{
-		return $this->call_method('post', $path, $config, $returnObj);
+		return $this->makeRequest('post', $parameters);
+	}
+	public function create($parameters = [])
+	{
+		return $this->post($parameters);
 	}
 	/**
 	 * put
@@ -189,9 +235,13 @@ class Api {
 	 *
 	 * @access	public
 	 */
-	public function put( $path, $config = array(), $returnObj = false )
+	public function put($parameters = [])
 	{
-		return $this->call_method('put', $path, $config, $returnObj);
+		return $this->makeRequest('put', $parameters);
+	}
+	public function edit($parameters = [])
+	{
+		return $this->put($parameters);
 	}
 	/**
 	 * client

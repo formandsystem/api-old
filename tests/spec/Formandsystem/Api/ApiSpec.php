@@ -8,14 +8,15 @@ use Prophecy\Argument;
 class ApiSpec extends ObjectBehavior
 {
     public $var = [
-      'version' => 'v1'
+      'version' => 'v1',
+      'url' => 'http://api.formandsystem.local/',
     ];
 
     // runs before every test
     function let()
     {
       $this->beConstructedWith(array(
-        'url' => 'http://api.formandsystem.com',
+        'url' => 'http://api.formandsystem.local',
         'version' => '1',
         'username' => 'lukas@vea.re',
         'password' => 'lukas',
@@ -29,48 +30,106 @@ class ApiSpec extends ObjectBehavior
 
     function it_returns_the_base_url()
     {
-      $this->getBaseUrl()->shouldReturn('http://api.formandsystem.com/v1/');
+      $this->getBaseUrl()->shouldReturn($this->var['url'].$this->var['version'].'/');
     }
 
-    function it_returns_a_valid_request_path()
-    {
-      // without parameters
-      $this->getRequestPath('pages')->shouldReturn('http://api.formandsystem.com/'.$this->var['version'].'/pages?language=en');
-      $this->getRequestPath('streams')->shouldReturn('http://api.formandsystem.com/'.$this->var['version'].'/streams?language=en');
-
-      // maximum parameters
-      $this->getRequestPath('pages',[
-        'format' => 'json',
-        'language' => 'de',
-        'fields' => 'id,article_id',
-        'status' => '1',
-        'pathSeparator' => '::'
-      ])->shouldReturn('http://api.formandsystem.com/'.$this->var['version'].'/pages?format=json&language=de&fields=id,article_id&status=1&pathSeparator=::');
-
-      $this->getRequestPath('streams',[
-        'format' => 'json',
-        'language' => 'de',
-        'fields' => 'id,article_id',
-        'status' => 1,
-        'limit' => 20,
-        'offset' => 5,
-        'until' => '2014-07-12',
-        'since' => '2014-02-12',
-        'first' => 'false'
-      ])->shouldReturn('http://api.formandsystem.com/'.$this->var['version'].'/streams?format=json&language=de&fields=id,article_id&status=1&limit=20&offset=5&until=2014-07-12&since=2014-02-12&first=false');
-
-    }
-
-    function it_creates_requestPath()
+    function it_creates_requestPath_using_page()
     {
       $this->requestPath->shouldBe(null);
-      $this->page('home', ['language' => 'de']);
-      $this->requestPath->shouldBe('http://api.formandsystem.com/'.$this->var['version'].'/pages/home?language=de');
+      $this->page('home');
+      $this->requestPath->shouldBe($this->var['url'].$this->var['version'].'/pages/home');
+    }
+
+    function it_creates_requestPath_using_pages()
+    {
+      $this->requestPath->shouldBe(null);
+      $this->pages('home');
+      $this->requestPath->shouldBe($this->var['url'].$this->var['version'].'/pages/home');
+    }
+
+    function it_creates_requestPath_using_stream()
+    {
+      $this->requestPath->shouldBe(null);
+      $this->stream('news');
+      $this->requestPath->shouldBe($this->var['url'].$this->var['version'].'/streams/news');
+    }
+
+    function it_creates_requestPath_using_streams()
+    {
+      $this->requestPath->shouldBe(null);
+      $this->stream('news');
+      $this->requestPath->shouldBe($this->var['url'].$this->var['version'].'/streams/news');
+    }
+
+    function it_should_run_a_valid_page_get_request()
+    {
+      $this->pages('home');
+      $this->createRequest('get', ['language' => 'en']);
+      $this->request->getUrl()->shouldBe($this->var['url'].$this->var['version'].'/pages/home?language=en');
+      $this->request->getMethod()->shouldBe('GET');
+    }
+
+    function it_should_run_a_valid_stream_get_request()
+    {
+      $this->stream('news');
+      $this->createRequest('get', ['language' => 'de']);
+      $this->request->getUrl()->shouldBe($this->var['url'].$this->var['version'].'/streams/news?language=de');
+      $this->request->getMethod()->shouldBe('GET');
+    }
+
+    function it_should_run_a_valid_delete_request()
+    {
+      $this->pages('1');
+      $this->createRequest('delete');
+      $this->request->getUrl()->shouldBe($this->var['url'].$this->var['version'].'/pages/1');
+      $this->request->getMethod()->shouldBe('DELETE');
+    }
+
+    function it_should_run_a_valid_post_request()
+    {
+      $this->pages('1');
+      $this->createRequest('post', ['status' => 2, 'tags' => 'some, new, tags']);
+      $this->request->getUrl()->shouldBe($this->var['url'].$this->var['version'].'/pages/1');
+      $this->request->getMethod()->shouldBe('POST');
+      $this->request->getBody()->getFields()->shouldHaveCount(2);
+      $this->request->getBody()->getFields()->shouldHaveKey('status');
+      $this->request->getBody()->getFields()->shouldHaveKey('tags');
     }
 
     function it_returns_array()
     {
-      $response ='{"success":"true","id":1,"article_id":1,"menu_label":"Home","link":"home","status":1,"language":"de","data":[{"class":"section-01","content":[{"type":"default","column":12,"media":[{"src":"banner.jpg","description":"Some optional text"}],"content":"# Kliniken in ganz Deutschland.\nDurch das Copra PMS wird die Arbeite in vielen Kliniken erleichtert.","class":"banner js-banner"}]},{"class":"space-bottom-wide","link":"Vision","content":[{"type":"default","column":12,"content":"#Vision\n>Das Logbuch f\u00fcr jeden Patientenaufenthalt und ein neuer Helfer im behandelnden Team.","class":"space-bottom-wide"},{"type":"default","column":4,"media":[{"src":"icon-connected.svg"}],"content":"##Vernetzt\nCopra erm\u00f6glicht eine leichte Anbindung an viele Drittsysteme, Ger\u00e4te, Exportschnittstellen und Apps.","class":"centered-content padded-column"},{"type":"default","column":4,"media":[{"src":"icon-verfuegbarkeit.svg"}],"content":"##99% verf\u00fcgbar\nEgal ob unterbrochenes Netzwerk, kaputter Server oder das Ger\u00e4t ohne Netzverbindung transportiert wird - f\u00fcr die Dokumentation steht COPRA jederzeit bereit.","class":"centered-content padded-column"},{"type":"default","column":4,"media":[{"src":"icon-customize.svg"}],"content":"##Customizable\nPerfekte Integration in Ihre Prozesse und individuelle Anpassung auf die Vorz\u00fcge eines Hauses.","class":"centered-content padded-column"}]},{"class":"red-section","link":"Anwendungsgebiete","content":[{"type":"default","column":3,"media":[{"src":"icon-doctor.svg"}],"content":"##\u00c4rzte\n- Fachbezogene Unterst\u00fctzung des Verodnungsworkflows\n- Integrierte Interaktionschecks\n- Plausibilit\u00e4tspr\u00fcfung\n- Flexibles Berichtswesen\n- Offlineverf\u00fcgbarkeit des Systems\n\n[Produktdetails](http:\/\/http:\/\/www\/copra\/public\/produkt)","class":"user-features"},{"type":"default","column":3,"media":[{"src":"icon-nurse.svg"}],"content":"##Pflege\n- Fachbezogene Unterst\u00fctzung des Verodnungsworkflows\n- Integrierte Interaktionschecks\n- Plausibilit\u00e4tspr\u00fcfung\n- Flexibles Berichtswesen\n- Offlineverf\u00fcgbarkeit des Systems\n\n[Produktdetails](http:\/\/http:\/\/www\/copra\/public\/produkt)","class":"user-features"},{"type":"default","column":3,"media":[{"src":"icon-management.svg"}],"content":"##Management\n- Fachbezogene Unterst\u00fctzung des Verodnungsworkflows\n- Integrierte Interaktionschecks\n- Plausibilit\u00e4tspr\u00fcfung\n- Flexibles Berichtswesen\n- Offlineverf\u00fcgbarkeit des Systems\n\n[Produktdetails](http:\/\/http:\/\/www\/copra\/public\/produkt)","class":"user-features"},{"type":"default","column":3,"media":[{"src":"icon-it.svg"}],"content":"##IT\n- Fachbezogene Unterst\u00fctzung des Verodnungsworkflows\n- Integrierte Interaktionschecks\n- Plausibilit\u00e4tspr\u00fcfung\n- Flexibles Berichtswesen\n- Offlineverf\u00fcgbarkeit des Systems\n\n[Produktdetails](http:\/\/http:\/\/www\/copra\/public\/produkt)","class":"user-features"}]},{"class":"section-04 section--gray","link":"Neuigkeiten","content":[{"type":"subsection","column":7,"content":[{"type":"default","media":[{"src":"copra-features-teaser.jpg"}],"content":"##Vorteile des Copra Systems\nDer gro\u00dfe Vorteil einer computergest\u00fctzten Dokumentation besteht darin, dass Funktionen genutzt werden, die in\u00a0einer handschriftlichen Dokumentation zu viel Aufwand bedeuten oder schlicht unm\u00f6glich w\u00e4ren.","class":"teaser-card teaser-card--image-right"},{"type":"default","media":[{"src":"copra-features-teaser.jpg"}],"content":"##Integrationsprozess\nDer gro\u00dfe Vorteil einer computergest\u00fctzten Dokumentation besteht darin, dass Funktionen genutzt werden, die in\u00a0einer handschriftlichen Dokumentation zu viel Aufwand bedeuten oder schlicht unm\u00f6glich w\u00e4ren.","class":"teaser-card"}]},{"type":"subsection","column":5,"content":[{"type":"stream","class":"news","stream":"news","mode":"preview"}]}]}],"tags":null,"created_at":"2014-09-23 01:09:12","updated_at":"2014-09-23 01:09:12","deleted_at":null}';
+      $response ='{
+        "success": "true",
+        "id": 1,
+        "article_id": 1,
+        "menu_label": "Home",
+        "link": "home",
+        "status": 1,
+        "language": "de",
+        "data": [
+            {
+                "class": "section-01",
+                "content": [
+                    {
+                        "type": "default",
+                        "column": 12,
+                        "media": [
+                            {
+                                "src": "banner.jpg",
+                                "description": "Some optional text"
+                            }
+                        ],
+                        "content": "# Kliniken in ganz Deutschland.\nDurch das Copra PMS wird die Arbeite in vielen Kliniken erleichtert.",
+                        "class": "banner js-banner"
+                    }
+                ]
+            }
+        ],
+        "tags": null,
+        "created_at": "2014-09-23 01:09:12",
+        "updated_at": "2014-09-23 01:09:12",
+        "deleted_at": null
+    }';
 
       $this->handleResponse(json_decode($response, true))->shouldBeArray();
       $this->handleResponse(json_decode('{"success":"true","id":1,"article_id":1,"menu_label":"Home","link":"home"}', true))->shouldBeArray();
