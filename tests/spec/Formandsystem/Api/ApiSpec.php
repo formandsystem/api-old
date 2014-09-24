@@ -96,6 +96,17 @@ class ApiSpec extends ObjectBehavior
       $this->request->getBody()->getFields()->shouldHaveKey('tags');
     }
 
+    function it_should_run_a_valid_put_request()
+    {
+      $this->pages('1');
+      $this->createRequest('put', ['status' => 2, 'tags' => 'some, new, tags']);
+      $this->request->getUrl()->shouldBe($this->var['url'].$this->var['version'].'/pages/1');
+      $this->request->getMethod()->shouldBe('PUT');
+      $this->request->getBody()->getFields()->shouldHaveCount(2);
+      $this->request->getBody()->getFields()->shouldHaveKey('status');
+      $this->request->getBody()->getFields()->shouldHaveKey('tags');
+    }
+
     function it_returns_array()
     {
       $response ='{
