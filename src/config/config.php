@@ -15,7 +15,13 @@ return array(
     'url' => 'http://api.formandsystem.com',
     'version' => 1.0
     'username' => $_ENV['FS_API_USER'],
-    'password' => $_ENV['FS_API_PASSWORD']
+    'password' => $_ENV['FS_API_PASSWORD'],
   ),
+
+  // set defaults
+  'defaults' => array(
+    'language' => 'en'
+  ),
+
 
 );

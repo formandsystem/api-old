@@ -7,10 +7,10 @@ php:
 
 before_script:
   - composer self-update
-  - composer install --prefer-source --no-interaction --dev
 
 install:
+  - composer install --prefer-source --no-interaction --dev
   - COMPOSER_ROOT_VERSION=dev-master composer install --prefer-source
 
 script:
-  - bin/phpspec run
+  - bin/phpspec run -v

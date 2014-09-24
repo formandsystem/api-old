@@ -18,16 +18,22 @@ class Api {
 	// global config
 	public $config;
 
-	// global path
-	public $path;
+	// global defaults
+	public $defaults;
+
+	// global requestPath
+	public $requestPath;
 
 	// global client variable
 	public $client;
 
-	public function __construct($config)
+	public function __construct($config, $defaults = [])
 	{
 		$this->config = $config;
 		$this->client = new GuzzleHttp\Client();
+		$this->defaults = array_merge(array(
+			'language' => 'en'
+		),(array) $defaults);
 	}
 
 
@@ -56,6 +62,15 @@ class Api {
 		foreach($parameters as $key => $value)
 		{
 			$parameters[$key] = $key.'='.$value;
+		}
+
+		// set needed parameters if missing
+		foreach($this->defaults as $key => $value)
+		{
+			if( !isset($parameters[$key]) )
+			{
+				$parameters[$key] = $key.'='.$value;
+			}
 		}
 
 		return trim($this->getBaseUrl().trim($path).'?'.implode("&",$parameters),'?');
@@ -133,10 +148,12 @@ class Api {
 	*
 	* @access	public
 	*/
-	// public function page($id, $parameters)
-	// {
-	// 	return $this
-	// }
+	public function page($id, $parameters = [])
+	{
+		$this->requestPath = $this->getRequestPath('pages/'.$id, $parameters);
+
+		return $this;
+	}
 
 	/**
 	 * get
@@ -145,9 +162,9 @@ class Api {
 	 *
 	 * @access	public
 	 */
-	public function get( $path = null, $config = array(), $returnObj = false )
+	public function get()
 	{
-		return $this->call_method('get', $path, $config, $returnObj);
+		return $this->makeRequest('get', $this->requestPath);
 	}
 	/**
 	 * delete

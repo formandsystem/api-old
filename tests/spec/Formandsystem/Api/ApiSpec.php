@@ -7,6 +7,10 @@ use Prophecy\Argument;
 
 class ApiSpec extends ObjectBehavior
 {
+    public $var = [
+      'version' => 'v1'
+    ];
+
     // runs before every test
     function let()
     {
@@ -30,10 +34,9 @@ class ApiSpec extends ObjectBehavior
 
     function it_returns_a_valid_request_path()
     {
-      $version = 'v1';
       // without parameters
-      $this->getRequestPath('pages')->shouldReturn('http://api.formandsystem.com/'.$version.'/pages');
-      $this->getRequestPath('streams')->shouldReturn('http://api.formandsystem.com/'.$version.'/streams');
+      $this->getRequestPath('pages')->shouldReturn('http://api.formandsystem.com/'.$this->var['version'].'/pages?language=en');
+      $this->getRequestPath('streams')->shouldReturn('http://api.formandsystem.com/'.$this->var['version'].'/streams?language=en');
 
       // maximum parameters
       $this->getRequestPath('pages',[
@@ -42,7 +45,7 @@ class ApiSpec extends ObjectBehavior
         'fields' => 'id,article_id',
         'status' => '1',
         'pathSeparator' => '::'
-      ])->shouldReturn('http://api.formandsystem.com/'.$version.'/pages?format=json&language=de&fields=id,article_id&status=1&pathSeparator=::');
+      ])->shouldReturn('http://api.formandsystem.com/'.$this->var['version'].'/pages?format=json&language=de&fields=id,article_id&status=1&pathSeparator=::');
 
       $this->getRequestPath('streams',[
         'format' => 'json',
@@ -54,14 +57,16 @@ class ApiSpec extends ObjectBehavior
         'until' => '2014-07-12',
         'since' => '2014-02-12',
         'first' => 'false'
-      ])->shouldReturn('http://api.formandsystem.com/'.$version.'/streams?format=json&language=de&fields=id,article_id&status=1&limit=20&offset=5&until=2014-07-12&since=2014-02-12&first=false');
+      ])->shouldReturn('http://api.formandsystem.com/'.$this->var['version'].'/streams?format=json&language=de&fields=id,article_id&status=1&limit=20&offset=5&until=2014-07-12&since=2014-02-12&first=false');
 
     }
 
-    // function it_calls_get_on_pages()
-    // {
-    //   $this->page('home')->get();
-    // }
+    function it_creates_requestPath()
+    {
+      $this->requestPath->shouldBe(null);
+      $this->page('home', ['language' => 'de']);
+      $this->requestPath->shouldBe('http://api.formandsystem.com/'.$this->var['version'].'/pages/home?language=de');
+    }
 
     function it_returns_array()
     {
