@@ -16,7 +16,7 @@ class ApiSpec extends ObjectBehavior
     {
       $this->beConstructedWith(array(
         'url' => 'http://api.formandsystem.com',
-        'version' => 'v1',
+        'version' => '1',
         'username' => 'lukas@vea.re',
         'password' => 'lukas',
       ));

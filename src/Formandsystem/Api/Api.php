@@ -46,7 +46,7 @@ class Api {
 	*/
 	public function getBaseUrl()
 	{
-		return trim($this->config['url']).'/'.trim($this->config['version']).'/';
+		return trim($this->config['url']).'/v'.trim($this->config['version']).'/';
 	}
 
 	/**
@@ -129,17 +129,11 @@ class Api {
 	*/
 	public function handleExceptions( $e )
 	{
-		$errors = json_decode($e->getResponse()->getBody(), true);
-		$error = "";
-		if( is_array($errors) )
-		{
-			// cast errors to string
-			foreach( $errors['errors'] as $key => $arr )
-			{
-				$error .= "[".$key."]: ".implode(" ",$arr).' ';
-			}
-		}
-		return array('success' => "false", $e->getCode() => $error );
+		// get default error message;
+		$error = $e->getMessage();
+		$errors = array($errors[$e->getCode()] => $e->getMessage()) + json_decode($e->getResponse()->getBody(), true)['errors'];
+
+		return array('success' => "false", 'errors' => $errors);
 	}
 
 
