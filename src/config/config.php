@@ -18,10 +18,4 @@ return array(
     'password' => $_ENV['FS_API_PASSWORD'],
   ),
 
-  // set defaults
-  'defaults' => array(
-    'language' => 'en'
-  ),
-
-
 );

@@ -18,9 +18,6 @@ class Api {
 	// global config
 	public $config;
 
-	// global defaults
-	public $defaults;
-
 	// global requestPath
 	public $requestPath;
 
@@ -37,9 +34,6 @@ class Api {
 	{
 		$this->config = $config;
 		$this->client = new GuzzleHttp\Client();
-		$this->defaults = array_merge(array(
-			'language' => 'en'
-		),(array) $defaults);
 	}
 
 
@@ -78,7 +72,7 @@ class Api {
 		// preapre response options array
 		$requestOptions['auth'] = [ $this->config['username'], $this->config['password'] ];
 		// if type == get, use parameters
-		$type === 'get' ? $requestOptions['query'] = array_merge($this->defaults, $parameters) : '';
+		$type === 'get' ? $requestOptions['query'] = $parameters : '';
 		// if type == get, use parameters
 		$type === 'put' || $type === 'post' ? $requestOptions['body'] = $parameters : '';
 		// make request
