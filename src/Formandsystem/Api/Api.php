@@ -30,7 +30,7 @@ class Api {
 	// global client variable
 	public $client;
 
-	public function __construct($config, $defaults = [])
+	public function __construct($config)
 	{
 		$this->config = $config;
 		$this->client = new GuzzleHttp\Client();
@@ -196,6 +196,8 @@ class Api {
 	{
 		return $this->makeRequest('get', $parameters);
 	}
+
+	
 	/**
 	 * delete
 	 *
@@ -207,6 +209,8 @@ class Api {
 	{
 		return $this->makeRequest('delete');
 	}
+
+
 	/**
 	 * post
 	 *
@@ -222,6 +226,8 @@ class Api {
 	{
 		return $this->post($parameters);
 	}
+
+
 	/**
 	 * put
 	 *
@@ -236,17 +242,6 @@ class Api {
 	public function edit($parameters = [])
 	{
 		return $this->put($parameters);
-	}
-	/**
-	 * client
-	 *
-	 * get guzzle client
-	 *
-	 * @access	public
-	 */
-	public function client()
-	{
-		return $this->client;
 	}
 
 
