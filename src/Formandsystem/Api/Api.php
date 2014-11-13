@@ -30,10 +30,14 @@ class Api {
 	// global client variable
 	public $client;
 
-	public function __construct($config, $defaults = [])
+	// global cache variable
+	public $cache;
+
+	public function __construct($config, $cache)
 	{
 		$this->config = $config;
 		$this->client = new GuzzleHttp\Client();
+		$this->cache = $cache;
 	}
 
 
@@ -46,7 +50,7 @@ class Api {
 	*/
 	public function getBaseUrl()
 	{
-		return trim($this->config['url']).'/v'.trim($this->config['version']).'/';
+		return trim($this->config['url']).'/v'.trim(trim($this->config['version']), 'v').'/';
 	}
 
 	/**
@@ -61,22 +65,45 @@ class Api {
 		$this->requestPath = $this->getBaseUrl().trim($path);
 	}
 
+	/**
+	* get path
+	*
+	* get path
+	*
+	* @access	public
+	*/
+	public function getRequestPath( )
+	{
+		return $this->requestPath;
+	}
 
 	/**
 	* createRequest
 	*
 	* @access	public
 	*/
-	public function createRequest($type, $parameters = [])
+	public function createRequest($type, $requestPath, $parameters = [],
+			$headers = array('Content-Type' => 'application/x-www-form-urlencoded', 'Accept' => 'application/json')
+	)
 	{
-		// preapre response options array
-		$requestOptions['auth'] = [ $this->config['username'], $this->config['password'] ];
-		// if type == get, use parameters
-		$type === 'get' ? $requestOptions['query'] = $parameters : '';
-		// if type == get, use parameters
-		$type === 'put' || $type === 'post' ? $requestOptions['body'] = $parameters : '';
+		$type = strtoupper($type);
+
+		if( $type === 'GET' )
+		{
+			$params['query'] = $parameters;
+		}
+		else
+		{
+			$params['body'] = $parameters;
+		}
+
+		$options = array_merge([
+			'headers' => $headers,
+			"debug" => false
+		], $params);
+
 		// make request
-		$this->request = $this->client->createRequest($type, $this->requestPath, $requestOptions);
+		$this->request = $this->client->createRequest($type, $requestPath, $options);
 
 		return $this;
 	}
@@ -90,7 +117,7 @@ class Api {
 	public function sendRequest()
 	{
 		try{
-			return $this->handleResponse($this->client->send($this->request)->json());
+			return $this->client->send($this->request)->json();
 		}
 		catch(GuzzleHttp\Exception\ClientException $e)
 		{
@@ -106,34 +133,56 @@ class Api {
 	*/
 	public function makeRequest($type, $parameters = [])
 	{
-		return $this->createRequest($type, $parameters)->sendRequest();
+		return $this->createRequest($type, $this->getRequestPath(), $this->makeParameters($parameters))->sendRequest();
 	}
 
 	/**
-	* handleResponse
+	* makeParameters
 	*
 	* @access	public
 	*/
-	public function handleResponse( $response )
+	public function makeParameters($parameters = [])
 	{
-		if( isset($response['content'] ) )
-		{
-			foreach($response['content'] as $item)
-			{
-				foreach( $item as $field => $value )
-				{
-					if( is_array(json_decode($value, true)) )
-					{
-						$item[$field] = json_decode($value, true);
-					}
-				}
-				$result[] = $item;
-			}
+		return array_merge($parameters, $this->accessToken());
+	}
 
-			$response['content'] = $result;
+	/**
+	* accessToken
+	*
+	* @access	public
+	*/
+	public function accessToken()
+	{
+		if ( ! $this->cache->has('access_token') || 1== 1 )
+		{
+			$tokenRequest = $this->createRequest(
+				'POST',
+				$this->getBaseUrl().'oauth/access_token',
+				[
+					"grant_type" 		=> "client_credentials",
+					"client_id"  		=>	$this->config['client_id'],
+					"client_secret"	=>	$this->config['client_secret'],
+					"scope"					=>	$this->config['scope'],
+			])->sendRequest();
+			//
+			//
+// $request = $this->client->post($this->getRequestPath(), [
+// 	"body" => [
+// 		"grant_type" 		=> "client_credentials",
+// 		"client_id"  		=>	$this->config['client_id'],
+// 		"client_secret"	=>	$this->config['client_secret'],
+// 		"scope"					=>	$this->config['scope'],
+// 	],
+// 	"debug" => true
+// ]);
+//
+
+
+			// cache access token
+			$this->cache->put('access_token', $tokenRequest['access_token'], $tokenRequest['expires_in']);
 		}
 
-		return $response;
+		return ['access_token' => $this->cache->get('access_token')];
 	}
 
 	/**
@@ -143,11 +192,12 @@ class Api {
 	*/
 	public function handleExceptions( $e )
 	{
-		// get default error message;
-		$error = $e->getMessage();
-		$errors = array($e->getCode() => [$e->getMessage()]) + json_decode($e->getResponse()->getBody(), true)['errors'];
+		if( $e->getResponse() )
+		{
+			return json_decode($e->getResponse());
+		}
 
-		return array('success' => "false", 'errors' => $errors);
+		return $e->getStatusCode().': '.$e->getMessage();
 	}
 
 

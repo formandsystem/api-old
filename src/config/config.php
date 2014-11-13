@@ -10,12 +10,12 @@ return array(
   | configuration for the api
   |
   */
-
-  'api' => array(
-    'url' => 'http://api.formandsystem.com',
-    'version' => '1',
-    'username' => $_ENV['FS_API_USER'],
-    'password' => $_ENV['FS_API_PASSWORD'],
-  ),
+  'config' => [
+    'url'           => 'http://api.formandsystem.com',
+    'version'       => '1',
+    'client_id'     => $_ENV['FS_API_CLIENT_ID'],
+    'client_secret' => $_ENV['FS_API_CLIENT_SECRET'],
+    'scope'         => 'content.read',
+  ]
 
 );

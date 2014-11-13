@@ -31,9 +31,11 @@ class ApiServiceProvider extends ServiceProvider {
 		$this->app->bind('api', function($app){
 
 			// get configuration (laravel)
-			$config = Config::get('api::api');
+			$config = Config::get('api::config');
 
-			return new Api($config);
+			$cache = $app->make('cache');
+
+			return new Api($config['config'], $cache);
 
 		});
 
