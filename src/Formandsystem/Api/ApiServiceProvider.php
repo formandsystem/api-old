@@ -2,6 +2,7 @@
 
 use Illuminate\Support\ServiceProvider;
 use Config;
+use \Cache;
 
 class ApiServiceProvider extends ServiceProvider {
 
@@ -18,6 +19,7 @@ class ApiServiceProvider extends ServiceProvider {
 	public function boot()
 	{
 		$this->package('formandsystem/api');
+		include __DIR__.'/routes.php';
 	}
 
 	/**
@@ -36,6 +38,12 @@ class ApiServiceProvider extends ServiceProvider {
 			$cache = $app->make('cache');
 
 			return new Api($config['config'], $cache);
+
+
+						// $this->app->bind(
+						// 	'Formandsystem\Api\Contracts\CacheInterface',
+						// 	'Illuminate\Support\Facades\Cache'
+						// );
 
 		});
 

@@ -4,9 +4,13 @@ namespace spec\Formandsystem\Api;
 
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
+use \Mockery as Mockery;
+use \Cache;
+
 
 class ApiSpec extends ObjectBehavior
 {
+    public $cache;
     public $var = [
       'version' => 'v1',
       'url' => 'http://api.formandsystem.local/',
@@ -15,12 +19,13 @@ class ApiSpec extends ObjectBehavior
     // runs before every test
     function let()
     {
+      $this->cache = Mockery::mock('Cache');
+
+
       $this->beConstructedWith(array(
         'url' => 'http://api.formandsystem.local',
-        'version' => '1',
-        'username' => 'lukas@vea.re',
-        'password' => 'lukas',
-      ));
+        'version' => '1'
+      ), $this->cache);
     }
 
     function it_is_initializable()
@@ -63,9 +68,13 @@ class ApiSpec extends ObjectBehavior
 
     function it_should_run_a_valid_page_get_request()
     {
+      $this->cache->shouldReceive('has')->once()->andReturn('false');
+      $this->cache->shouldReceive('get')->once()->andReturn('test_token');
+
       $this->pages('home');
-      $this->createRequest('get', ['language' => 'en']);
-      $this->request->getUrl()->shouldBe($this->var['url'].$this->var['version'].'/pages/home?language=en');
+      $this->makeRequest('get', ['language' => 'en']);
+
+      $this->request->getUrl()->shouldBe($this->var['url'].$this->var['version'].'/pages/home?language=en&access_token=test_token');
       $this->request->getMethod()->shouldBe('GET');
     }
 

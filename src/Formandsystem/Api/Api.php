@@ -21,9 +21,6 @@ class Api {
 	// global requestPath
 	public $requestPath;
 
-	// global requestPath
-	public $requestOptions;
-
 	// global request
 	public $request;
 
@@ -116,8 +113,29 @@ class Api {
 	*/
 	public function sendRequest()
 	{
+		// @TODO: clean up
+		if($this->request->getMethod() == 'GET')
+		{
+			$key = sha1($this->request->getUrl());
+			if( $this->cache->has($key) )
+			{
+				return $this->cache->get($key);
+			}
+		}
+
 		try{
-			return $this->client->send($this->request)->json();
+			$request = $this->client->send($this->request)->json();
+
+			if($this->request->getMethod() == 'GET')
+			{
+				$this->cache->forever($key, $request);
+				$keys = $this->cache->get('cache.fsapi');
+				$keys[] = $key;
+				$this->cache->forever('cache.fsapi', $keys);
+			}
+
+			return $request;
+
 		}
 		catch(GuzzleHttp\Exception\ClientException $e)
 		{
@@ -153,7 +171,7 @@ class Api {
 	*/
 	public function accessToken()
 	{
-		if ( ! $this->cache->has('access_token') || 1== 1 )
+		if ( ! $this->cache->has('access_token') )
 		{
 			$tokenRequest = $this->createRequest(
 				'POST',
@@ -164,23 +182,10 @@ class Api {
 					"client_secret"	=>	$this->config['client_secret'],
 					"scope"					=>	$this->config['scope'],
 			])->sendRequest();
-			//
-			//
-// $request = $this->client->post($this->getRequestPath(), [
-// 	"body" => [
-// 		"grant_type" 		=> "client_credentials",
-// 		"client_id"  		=>	$this->config['client_id'],
-// 		"client_secret"	=>	$this->config['client_secret'],
-// 		"scope"					=>	$this->config['scope'],
-// 	],
-// 	"debug" => true
-// ]);
-//
-
-
 			// cache access token
-			$this->cache->put('access_token', $tokenRequest['access_token'], $tokenRequest['expires_in']);
+			$this->cache->put('access_token', $tokenRequest['access_token'], ((int) $tokenRequest['expires_in']-60)/60);
 		}
+
 
 		return ['access_token' => $this->cache->get('access_token')];
 	}
@@ -196,7 +201,6 @@ class Api {
 		{
 			return json_decode($e->getResponse());
 		}
-
 		return $e->getStatusCode().': '.$e->getMessage();
 	}
 
@@ -299,5 +303,21 @@ class Api {
 		return $this->client;
 	}
 
-
+	/**
+	 * clear cache
+	 *
+	 * @method clearCache
+	 *
+	 * @param  [type]     $key
+	 */
+	public function clearCache( $key )
+	{
+		foreach($this->cache->get('cache.fsapi', []) as $id => $key)
+		{
+			$this->cache->forget($key);
+		}
+		$this->cache->forget('cache.fsapi');
+		
+		\Event::fire('cache.cleared', array($key));
+	}
 }
