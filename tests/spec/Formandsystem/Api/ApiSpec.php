@@ -139,7 +139,7 @@ class ApiSpec extends ObjectBehavior
                                 "description": "Some optional text"
                             }
                         ],
-                        "content": "# Kliniken in ganz Deutschland.\nDurch das Copra PMS wird die Arbeite in vielen Kliniken erleichtert.",
+                        "content": "# Kliniken in ganz Deutschland.\nDurch das COPRA PMS wird die Arbeite in vielen Kliniken erleichtert.",
                         "class": "banner js-banner"
                     }
                 ]

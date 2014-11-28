@@ -16,6 +16,7 @@ return array(
     'client_id'     => $_ENV['FS_API_CLIENT_ID'],
     'client_secret' => $_ENV['FS_API_CLIENT_SECRET'],
     'scope'         => 'content.read',
+    'cache'         => true,
   ]
 
 );

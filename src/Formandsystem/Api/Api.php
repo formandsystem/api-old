@@ -117,7 +117,7 @@ class Api {
 		if($this->request->getMethod() == 'GET')
 		{
 			$key = sha1($this->request->getUrl());
-			if( $this->cache->has($key) )
+			if( $this->cache->has($key) && $this->config['cache'] == true )
 			{
 				return $this->cache->get($key);
 			}
@@ -317,7 +317,7 @@ class Api {
 			$this->cache->forget($key);
 		}
 		$this->cache->forget('cache.fsapi');
-		
+
 		\Event::fire('cache.cleared', array($key));
 	}
 }
